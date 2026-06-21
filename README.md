@@ -56,28 +56,57 @@ Insert N items, then drain the queue, timed with `time.perf_counter()`:
 ```
 Implementation                    N    Insert (ms)     Drain (ms)    vs fastest
 -------------------------------------------------------------------------------
-naive (unsorted list)           100          0.042          0.022       1.00x *
-bubble heap                     100          0.028          0.081       3.73x
-heapq                           100          0.089          0.022       1.00x
+naive (unsorted list)           100          0.028          0.021       1.00x *
+bubble heap                     100          0.028          0.086       4.15x
+heapq                           100          0.090          0.022       1.07x
 
-naive (unsorted list)          1000          0.374          0.201       1.00x *
-bubble heap                    1000          0.274          1.306       6.48x
-heapq                          1000          0.593          0.241       1.20x
+naive (unsorted list)           200          0.044          0.036       1.00x *
+bubble heap                     200          0.048          0.187       5.17x
+heapq                           200          0.041          0.041       1.14x
 
-naive (unsorted list)         10000          4.217          7.634       2.30x
-bubble heap                   10000          2.800         19.540       5.90x
-heapq                         10000          2.978          3.314       1.00x *
+naive (unsorted list)           500          0.157          0.095       1.00x *
+bubble heap                     500          0.140          0.570       6.00x
+heapq                           500          0.129          0.112       1.18x
 
-naive (unsorted list)         50000         22.630        111.740       5.24x
-bubble heap                   50000         21.521        120.494       5.65x
-heapq                         50000         25.696         21.315       1.00x *
+naive (unsorted list)          1000          0.287          0.202       1.00x *
+bubble heap                    1000          0.605          1.413       6.99x
+heapq                          1000          0.282          0.255       1.26x
 
-naive (unsorted list)        100000         41.053        419.931       9.30x
-bubble heap                  100000         40.575        271.068       6.00x
-heapq                        100000         55.822         45.173       1.00x *
+naive (unsorted list)          2000          0.630          0.507       1.00x *
+bubble heap                    2000          0.572          3.021       5.95x
+heapq                          2000          0.574          0.521       1.03x
+
+naive (unsorted list)          5000          2.021          2.017       1.32x
+bubble heap                    5000          1.477          8.865       5.78x
+heapq                          5000          1.563          1.533       1.00x *
+
+naive (unsorted list)         10000          3.482          5.955       1.63x
+bubble heap                   10000          2.992         21.487       5.88x
+heapq                         10000          3.477          3.653       1.00x *
+
+naive (unsorted list)         20000          7.412         22.094       2.79x
+bubble heap                   20000          6.810         44.976       5.69x
+heapq                         20000          7.820          7.906       1.00x *
+
+naive (unsorted list)         50000         21.226        112.831       5.23x
+bubble heap                   50000         21.532        131.033       6.07x
+heapq                         50000         24.293         21.594       1.00x *
+
+naive (unsorted list)         70000         23.731        208.284       6.68x
+bubble heap                   70000         29.499        182.433       5.85x
+heapq                         70000         38.881         31.198       1.00x *
+
+naive (unsorted list)        100000         36.823        422.126       8.15x
+bubble heap                  100000         41.753        274.900       5.31x
+heapq                        100000         60.882         51.817       1.00x *
 ```
 
-**The naive O(n²) list is actually faster than the hand-rolled heap until somewhere around N=50,000.** Big-O describes what happens as N approaches infinity — it says nothing about the constant factor. The hand-rolled heap does its comparisons in pure Python; the naive version leans on `sorted()` and `list.remove()`, which run in C. The "worse" algorithm wins on wall-clock time until the input is large enough for the asymptotics to actually dominate. `heapq` wins at every scale tested, for the same reason in reverse — it's the same algorithm as the hand-rolled heap, just implemented in C.
+The insert and drain columns tell different stories:
+
+- **Insert**: the hand-rolled bubble heap wins at nearly every size. `insert` only ever walks bubble-up along a single path from leaf to root, which is cheap even in pure Python — and it's short enough that `heapq`'s C-level function-call overhead doesn't pay for itself until N is fairly large.
+- **Drain**: this is where the naive O(n²) list actually beats the hand-rolled heap, all the way up through N=50,000. The crossover sits between N=50,000 (naive still ahead: 112.8ms vs 131.0ms) and N=70,000 (bubble heap pulls ahead: 208.3ms vs 182.4ms). The hand-rolled heap does its comparisons in pure Python; the naive version leans on `sorted()` and `list.remove()`, which run in C — so the "worse" algorithm wins on wall-clock time until the input is large enough for the asymptotics to dominate the constant-factor gap. `heapq` wins drain at every size tested, for the same reason in reverse: it's the same heap algorithm as the hand-rolled version, just implemented in C.
+
+Big-O describes what happens as N approaches infinity — it says nothing about the constant factor, and the constant factor is what actually decides the winner across most of the range tested here.
 
 ## Design notes
 

@@ -44,7 +44,7 @@ def benchmark_queues():
     print(f"{'Implementation':<25}{'N':>10}{'Insert (ms)':>15}{'Drain (ms)':>15}{'vs fastest':>14}")
     print("-" * 79)
 
-    for n in (100, 1_000, 10_000, 50_000, 100_000):
+    for n in (100, 200, 500, 1_000, 2_000, 5_000, 10_000, 20_000, 50_000, 70_000, 100_000):
         results = {name: time_insert_and_drain(pq_class, n) for name, pq_class in IMPLEMENTATIONS.items()}
         fastest_drain = min(drain_time for _, drain_time in results.values())
         for name, (insert_time, drain_time) in results.items():
